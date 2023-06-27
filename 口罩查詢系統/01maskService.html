@@ -1,0 +1,163 @@
+<!-- maskService -->
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>口罩查詢</title>
+		<link href="style.css" rel="stylesheet" type="text/css"/>
+		<script type="text/javascript" src="twCity.js"></script>
+		<script type="text/javascript">
+			var clrData;
+			var titleArr; //clrData[0]
+			var maskArr = new Array(); //clrData[1:]
+			var sec = 0;
+			var timeOut = false;
+
+			window.onload=function() {
+				cityInit();
+				showTown();
+				document.getElementById("btn").onclick=gerData;
+				document.getElementById("f1").onreset=init;
+				document.getElementById("city").onchange=showTown;
+				init();
+				
+			}
+
+			function countTime(){
+				if(!timeOut){
+					sec++;
+				}
+				else
+					sec=0;
+				document.getElementById("text").style.display = "inline-block";
+				document.getElementById("time").innerHTML = sec;
+				timeOut = false;
+			}
+
+			function gerData(){
+				timer = window.setInterval("countTime()", 1000);
+				var xmlHttp = new XMLHttpRequest();
+				try{
+					xmlHttp.open("GET", "02getMask.php", true);
+					xmlHttp.onreadystatechange=rsChange;
+					xmlHttp.send(null);
+				}
+				catch(e){
+					alert(e.message);
+				}
+				// console.log("gerData ok!");
+
+			}
+
+			function sortMask(a, b){
+				return b[4] - a[4];
+				// console.log("sortMask ok!")
+			}
+
+			function rsChange(){
+				if(this.readyState==4 && this.status==200){
+					var data = this.responseText;
+					// console.log("responseText ok!");
+					clrData = JSON.parse(data);
+					titleArr = clrData[0];
+					maskArr = clrData.slice(1);
+
+					var city = document.getElementById("city").value;
+					var town = document.getElementById("town").value;
+					var cityTown = city + town;
+					var display = new Array();
+
+					for(let i=0; i<maskArr.length; i++){
+						if(maskArr[i][2].includes(cityTown)){
+							display.push(maskArr[i]);	
+						}
+					}
+					// console.log(display);
+					display.sort(sortMask);
+					var tblStr = json2Table(display, titleArr);
+					document.getElementById("data").innerHTML = tblStr;
+					document.getElementById("text").style.display = "none";
+					window.clearInterval(timer);
+					timeOut = true;
+				}
+			}
+
+
+			function json2Table(jsonObj, titleArr) {
+		        var tbl="<table>";
+		        tbl+="<tr>";
+		        for (let i=0;i<titleArr.length;i++) {
+		           tbl += "<th>"+titleArr[i]+"</th>";
+		        }
+		        tbl+="</tr>";
+		        // console.log(jsonObj.length);
+		        for (let i=0;i<jsonObj.length;i++) {
+		      		tbl += "<tr>";
+		      		for (let j=0;j<jsonObj[i].length;j++) {
+		      		     tbl += "<td>"+jsonObj[i][j]+"</td>";
+		      		}
+		      		tbl += "</tr>";
+		        }
+		        tbl+="</table>";
+		        return tbl;
+      		}
+
+			function init() {
+				document.getElementById("data").innerHTML = "";
+				cityInit();
+				showTown();
+			}
+
+			function cityInit() {
+				var cityEle=document.getElementById("city");
+				for (let city in cityArr) {
+				    var opt=new Option();
+					opt.text=city;
+					cityEle.add(opt);
+			}
+			cityEle.selectedIndex=0;
+			}
+
+			function showTown() {
+			  var townEle=document.getElementById("town");
+			  var cityEle=document.getElementById("city");
+			  //var area=areaEle.options[areaEle.selectedIndex].text;
+			  var city=cityEle.value;
+			  clearTown();
+			  for (var i=0;i<cityArr[city].length;i++) {
+				    var opt=new Option();
+					opt.text=cityArr[city][i];
+					townEle.add(opt);
+			  }
+			}
+
+			function clearTown() {
+			  var townEle=document.getElementById("town");
+			  var noOp=townEle.options.length
+			  for (var i=0;i<noOp;i++) {
+			     townEle.remove(0);
+			  }
+			}
+			
+		</script>
+	</head>
+	<body>
+		<div id="content">
+		<form id="f1" name="f1">
+			<table>
+				<caption>口罩查詢系統</caption>
+				<tr><td>
+					城市: <select id="city" name="city"></select>
+					鄉鎮(區): <select id="town" name="town"></select>
+				</td></tr>
+				<tr><td colspan="2" style="text-align:center"><input id="btn" type="button" value="確認"/> <input type="reset" /></td></tr>
+			</table>
+		</form>
+		<a href="03totalMask.html">&#128073各縣市成人口罩剩餘數量</a>
+		<br/><span id="text">資料讀取中 <span id="time">0</span> 秒</span>
+		</div>
+
+		<div id="data"></div>
+		
+	</body>
+</html>

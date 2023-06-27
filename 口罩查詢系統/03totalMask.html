@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>縣市口罩統計</title>
+		<link href="style-2.css" rel="stylesheet" type="text/css"/>
+		<script type="text/javascript" src="twCity.js"></script>
+		<script type="text/javascript">
+			var clrData;
+			var titleArr = ["縣市", "成人口罩剩餘總數"];
+			var maskArr = new Array(); //clrData[1:]
+			var total = {};
+			var sec = 0;
+			var timeOut = false;
+
+			window.onload =function() {
+				timer = window.setInterval("countTime()", 1000);
+				var xmlHttp = new XMLHttpRequest();
+				try{
+					xmlHttp.open("GET", "02getMask.php", true);
+					xmlHttp.onreadystatechange = rsChange;
+					xmlHttp.send(null);
+				}
+				catch(e){
+					alert(e.message);
+				}
+			}
+
+			function countTime(){
+				if(!timeOut){
+					sec++;
+				}
+				else
+					sec=0;
+				document.getElementById("text").style.display = "inline-block";
+				document.getElementById("time").innerHTML = sec;
+				timeOut = false;
+			}
+
+
+			function rsChange(){
+				
+				if(this.readyState==4 && this.status==200){
+					var data = this.responseText;
+					clrData = JSON.parse(data);
+					maskArr = clrData.slice(1);
+
+					for(let i=0; i<maskArr.length; i++){
+						var city = maskArr[i][2].slice(0,3);
+						if(city == "臺中縣")
+							city = "臺中市";
+						
+						if(!(city in total)){
+							total[city] = Number(maskArr[i][4]);
+						}
+						else {
+							total[city] += Number(maskArr[i][4]);
+						}
+
+					}
+					// console.log(total);
+					// console.log(Object.keys(total).length);
+					// console.log(Object.values(total));
+					var tmp=[];
+					for(key in total){
+						tmp.push(total[key]);
+					}
+					// console.log(tmp);
+					tmp.sort(function(a, b){return b - a});
+					// console.log(tmp);
+					var display = {};
+					for(let i=0; i<tmp.length; i++){
+						for(key in total){
+							if(total[key] == tmp[i])
+								display[key] = tmp[i];
+						}
+					}
+					var tblStr = json2Table(display, titleArr);
+					document.getElementById("content").innerHTML = "";
+					document.getElementById("content").innerHTML = tblStr;
+
+					document.getElementById("text").style.display = "none";
+					window.clearInterval(timer);
+					timeOut = true;
+				}
+			}
+
+			function json2Table(jsonObj, titleArr) {
+		        var tbl="<table>";
+		        tbl += "<caption>各縣市成人口罩總數</caption>";
+		        tbl+="<tr>";
+		        for (let i=0;i<titleArr.length;i++) {
+		           tbl += "<th>"+titleArr[i]+"</th>";
+		        }
+		        tbl+="</tr>";
+		        // console.log(jsonObj.length);
+		        for (key in jsonObj) {
+		      		tbl += "<tr>";
+		      		tbl += "<td>"+key+"</td>";
+		      		tbl += "<td>"+jsonObj[key]+"</td>";
+		      		tbl += "</tr>";
+		        }
+		        tbl+="</table>";
+		        return tbl;
+      		}
+			
+			
+		</script>
+	</head>
+	<body>
+		<div id="text">資料讀取中 <span id="time">0</span> 秒</div>
+		<div id="content"></div>
+	</body>
+</html>

@@ -1,0 +1,30 @@
+body{
+	width:500px; 
+	margin:10px auto;
+	padding:50px;
+	text-align: center;
+}
+#text{
+	display:none;
+}
+table {
+	border: 3px outset RoyalBlue;
+	margin: auto;
+}
+td:nth-of-type(4), td:nth-of-type(5) {
+	text-align: center;
+	font-weight: bold;
+	color: red;
+}
+tr:nth-of-type(even) {
+	background-color: Lavender;
+}
+td {
+	padding: 3px 5px;
+}
+th {
+	text-align: left;
+	color: white;
+	background-color: Navy;
+	padding: 5px;
+}
